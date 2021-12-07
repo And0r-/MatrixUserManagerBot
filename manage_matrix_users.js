@@ -1,20 +1,17 @@
 const axios = require('axios');
 const dotenv = require('dotenv');
-var Storage = require('node-storage');
-
+const Storage = require('node-storage');
+const { diff } = require("deep-object-diff");
+const merge = require('deepmerge')
 const { Keycloak } = require('./Keycloak');
 const { Matrix } = require('./Matrix');
 
 var store = new Storage('temp');
 dotenv.config();
 
-const { diff } = require("deep-object-diff");
-
-
-const merge = require('deepmerge')
 var migratedUsers = store.get("migratedUsers");
-let keycloak = new Keycloak();
-let matrix = new Matrix();
+const keycloak = new Keycloak();
+const matrix = new Matrix();
 
 
 const Group2Room = {
@@ -47,12 +44,10 @@ const Group2Room = {
     ],
 }
 
-
-
 main();
 
 
-async function main() {
+function main() {
     if (migratedUsers === undefined) {
         initMigratedUsers();
     }
@@ -108,7 +103,7 @@ async function getupdatedUserRooms() {
         groupIds.map(async (groupId) => {
             let groupData = await keycloak.getGroupMembers(groupId[0]);
 
-            let UpdatedUserGroupeRooms = await generateUpdatedUserRooms(groupId[1], groupData);
+            let UpdatedUserGroupeRooms = generateUpdatedUserRooms(groupId[1], groupData);
             updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
         })
     )
@@ -128,7 +123,7 @@ async function migrateUserChanges(userChanges) {
 //     "room1": true,
 //     "room2": true,
 // },
-async function generateUpdatedUserRooms(group, users) {
+function generateUpdatedUserRooms(group, users) {
     let updatedUserRooms = {};
 
     users.forEach(user => {
@@ -137,7 +132,7 @@ async function generateUpdatedUserRooms(group, users) {
             // console.log("matrix user:" + user.firstName + " is in group: " + group);
             updatedUserRooms[user.id] = {};
             if (group in Group2Room) {
-                Group2Room[group].forEach(async room => {
+                Group2Room[group].forEach(room => {
                     // console.log(room);
                     updatedUserRooms[user.id][room] = true;
                     // console.log(updatedUserRooms);
