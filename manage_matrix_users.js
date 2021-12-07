@@ -13,6 +13,8 @@ const { diff } = require("deep-object-diff");
 
 
 var migratedUsers = store.get("migratedUsers");
+let keycloak = new Keycloak();
+let matrix = new Matrix();
 
 
 const Group2Room = {
@@ -52,20 +54,19 @@ main();
 async function main() {
 
 
-    let keycloak = new Keycloak();
-    let matrix = new Matrix();
+
 
     if (migratedUsers === undefined) {
-        initMigratedUsers(matrix);
+        initMigratedUsers();
     }
 
-    matrix_user_check(matrix)
+    matrix_user_check()
         .then(() => {
-            keycloak_user_check(keycloak);
+            keycloak_user_check();
         })
 }
 
-async function initMigratedUsers(matrix) {
+async function initMigratedUsers() {
     migratedUsers = {};
     let matrix_users = await matrix.getUserList();
     console.log(matrix_users.users);
@@ -82,64 +83,24 @@ function addUsertoMigration(username) {
     }
 }
 
-async function keycloak_user_check(keycloak) {
+async function keycloak_user_check() {
     keycloak.login()
         .then(async () => {
-            detect_changes(
-                "keycloak_users",
-                keycloak.getUserList(),
-                keycloak_migrate
-            );
 
-            let updatedUserRooms = await getupdatedUserRooms(keycloak);
+            let updatedUserRooms = await getupdatedUserRooms();
             // console.log(updatedUserRooms);
 
             let userChanges = diff(migratedUsers, updatedUserRooms);
                 migrateUserChanges(userChanges);
 
 
-            //     migratedUsers = updatedUserRooms;
-            //     store.put("migratedUsers", migratedUsers);
-
-
-            // Promise.all(promiseRequests).then(async () => {
-            //     if (
-            //         detect_changes(
-            //             "keycloak_groups",
-            //             groupData,
-            //             keycloak_groups_migrate
-            //         )
-            //         ||
-            //         importAllUserRolls === 1
-            //     ) {
-            //         console.log("check all user rolls...")
-            //         // console.log(groupData['/IOT-Member/CH']);
-
-            //         // transform: loop over all groups and add rooms to kcmember[user.id] when user is enabled and a matrix user
-            //         // example:
-            //         // user1: {
-            //         //     "room1": true,
-            //         //     "room2": true,
-            //         // },
-
-            //         // console.log(groupDataValues);
-            //         let updatedUserRooms = await generateUpdatedUserRooms(groupData);
-
-
-
-            //         let userChanges = diff(migratedUsers, updatedUserRooms);
-            //         migrateUserChanges(userChanges);
-
-
-            //         migratedUsers = updatedUserRooms;
-            //         store.put("migratedUsers", migratedUsers);
-            //     }
-            // });
+                migratedUsers = updatedUserRooms;
+                store.put("migratedUsers", migratedUsers);
         });
 }
 
 // get all keycloak group lists and merge it to one list with all groups
-async function getupdatedUserRooms(keycloak) {
+async function getupdatedUserRooms() {
     let groupIds = await keycloak.getServerGroupIds();
 
     let updatedUserRooms = {};
@@ -170,11 +131,7 @@ async function migrateUserChanges(userChanges) {
 // },
 async function generateUpdatedUserRooms(group, users) {
     let updatedUserRooms = {};
-    // console.log(group);
-    // console.log(users)
-    // for (const [group, usersPromises] of Object.entries(groupData)) {
-    //     usersPromises.then((users) => {
-    //         // console.log(values);
+
     users.forEach(user => {
         // Groupmember is enabled and in Matrix
         if (user.enabled === true && user.id in migratedUsers) {
@@ -189,15 +146,13 @@ async function generateUpdatedUserRooms(group, users) {
             }
         }
     })
-    // })
-    // };
-    // console.log(updatedUserRooms);
+
     return updatedUserRooms;
 }
 
 // add new Matrix users to migrationList
 // all users on this list will be checked and invite to some rooms
-async function matrix_user_check(matrix) {
+async function matrix_user_check() {
     let new_data = await matrix.getUserList();
     let old_data = store.get("matrix_users");
 
@@ -211,40 +166,9 @@ async function matrix_user_check(matrix) {
             addUsertoMigration(new_user.name);
         }
     });
-    
+
     store.put("matrix_users", new_data);
 }
-
-
-
-async function detect_changes(name, data, migration_handler) {
-    if (JSON.stringify(store.get(name)) !== JSON.stringify(await data)) {
-
-        console.log(name + " changes found!");
-        let answer = migration_handler(store.get(name), await data);
-        // @TODO: check changes and add user to channels
-        store.put(name, await data)
-        return answer;
-    } else {
-        console.log(name + " no changes")
-        return false;
-    }
-}
-
-
-
-// keycloak user list has changed
-async function keycloak_migrate(old_data, new_data) {
-    console.log("run keycloak migrate handler");
-}
-
-// keycloak usergroup has changed
-// check each user is he in the right rooms
-async function keycloak_groups_migrate(old_data, new_data) {
-    console.log("run keycloak groups migrate handler");
-    return true;
-}
-
 
 
 
