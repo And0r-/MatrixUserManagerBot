@@ -13,6 +13,7 @@
     "@keycloak/keycloak-admin-client": "^15.0.2",
     "axios": "^0.24.0",
     "deep-object-diff": "^1.1.0",
+    "deepmerge": "^4.2.2",
     "dotenv": "^10.0.0",
     "keycloak-admin": "^1.14.22",
     "keycloak-js": "^15.0.2",

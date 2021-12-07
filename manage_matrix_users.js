@@ -11,7 +11,7 @@ dotenv.config();
 const { diff } = require("deep-object-diff");
 
 
-
+const merge = require('deepmerge')
 var migratedUsers = store.get("migratedUsers");
 let keycloak = new Keycloak();
 let matrix = new Matrix();
@@ -75,6 +75,7 @@ async function initMigratedUsers() {
     })
     console.log(migratedUsers);
     store.put("migratedUsers", migratedUsers);
+    store.put("matrix_users", matrix_users);
 }
 
 function addUsertoMigration(username) {
@@ -88,16 +89,21 @@ async function keycloak_user_check() {
         .then(async () => {
 
             let updatedUserRooms = await getupdatedUserRooms();
-            // console.log(updatedUserRooms);
+
+            console.log("updatedUserRooms",updatedUserRooms);
+            console.log("migratedUsers",migratedUsers);
 
             let userChanges = diff(migratedUsers, updatedUserRooms);
-                migrateUserChanges(userChanges);
+
+            console.log(userChanges);
+                // migrateUserChanges(userChanges);
 
 
                 migratedUsers = updatedUserRooms;
                 store.put("migratedUsers", migratedUsers);
         });
 }
+
 
 // get all keycloak group lists and merge it to one list with all groups
 async function getupdatedUserRooms() {
@@ -107,13 +113,24 @@ async function getupdatedUserRooms() {
 
     return Promise.all(
         groupIds.map(async (groupId) => {
-            const groupData = await keycloak.getGroupMembers(groupId[0]);
+            let groupData = await keycloak.getGroupMembers(groupId[0]);
+
+            // console.log(groupId[1],groupData);
 
             let UpdatedUserGroupeRooms = await generateUpdatedUserRooms(groupId[1], groupData);
-            updatedUserRooms = { ...updatedUserRooms, ...UpdatedUserGroupeRooms }
+            // console.log(UpdatedUserGroupeRooms);
+            
+            
+            return UpdatedUserGroupeRooms;
         })
     )
-        .then(() => { return updatedUserRooms })
+        .then((lists) => { 
+            // console.log("finished list: ",lists); 
+            lists.forEach((UpdatedUserGroupeRooms) => {
+                updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
+            })
+            return updatedUserRooms 
+        })
 }
 
 
@@ -150,6 +167,7 @@ async function generateUpdatedUserRooms(group, users) {
     return updatedUserRooms;
 }
 
+
 // add new Matrix users to migrationList
 // all users on this list will be checked and invite to some rooms
 async function matrix_user_check() {
@@ -172,6 +190,9 @@ async function matrix_user_check() {
 
 
 
+
+// notes:
+// ---------------------------------------------------------------------------------------
 
 
 // one feed per group with users
