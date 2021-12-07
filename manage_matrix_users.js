@@ -51,11 +51,8 @@ const Group2Room = {
 
 main();
 
+
 async function main() {
-
-
-
-
     if (migratedUsers === undefined) {
         initMigratedUsers();
     }
@@ -65,6 +62,7 @@ async function main() {
             keycloak_user_check();
         })
 }
+
 
 async function initMigratedUsers() {
     migratedUsers = {};
@@ -78,11 +76,13 @@ async function initMigratedUsers() {
     store.put("matrix_users", matrix_users);
 }
 
+
 function addUsertoMigration(username) {
     if (username.match("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         migratedUsers[username.substr(1, 36)] = {}
     }
 }
+
 
 async function keycloak_user_check() {
     keycloak.login()
@@ -90,17 +90,10 @@ async function keycloak_user_check() {
 
             let updatedUserRooms = await getupdatedUserRooms();
 
-            console.log("updatedUserRooms",updatedUserRooms);
-            console.log("migratedUsers",migratedUsers);
+            migrateUserChanges(diff(migratedUsers, updatedUserRooms));
 
-            let userChanges = diff(migratedUsers, updatedUserRooms);
-
-            console.log(userChanges);
-                // migrateUserChanges(userChanges);
-
-
-                migratedUsers = updatedUserRooms;
-                store.put("migratedUsers", migratedUsers);
+            migratedUsers = updatedUserRooms;
+            store.put("migratedUsers", migratedUsers);
         });
 }
 
@@ -115,22 +108,11 @@ async function getupdatedUserRooms() {
         groupIds.map(async (groupId) => {
             let groupData = await keycloak.getGroupMembers(groupId[0]);
 
-            // console.log(groupId[1],groupData);
-
             let UpdatedUserGroupeRooms = await generateUpdatedUserRooms(groupId[1], groupData);
-            // console.log(UpdatedUserGroupeRooms);
-            
-            
-            return UpdatedUserGroupeRooms;
+            updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
         })
     )
-        .then((lists) => { 
-            // console.log("finished list: ",lists); 
-            lists.forEach((UpdatedUserGroupeRooms) => {
-                updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
-            })
-            return updatedUserRooms 
-        })
+        .then(() => { return updatedUserRooms })
 }
 
 
