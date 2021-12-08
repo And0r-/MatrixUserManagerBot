@@ -148,21 +148,21 @@ function generateUpdatedUserRooms(group, users) {
 // add new Matrix users to migrationList
 // all users on this list will be checked and invite to some rooms
 async function matrix_user_check() {
-    let new_data = await matrix.getUserList();
-    let old_data = store.get("matrix_users");
+    let matrixUsers = await matrix.getUserList();
+    let StoredMatrixUsers = store.get("matrix_users");
 
     // convert user array to object
-    old_data = old_data.users.reduce((a, v) => ({ ...a, [v.name]: v }), {});
-    new_data.users.forEach(async new_user => {
+    StoredMatrixUsers = StoredMatrixUsers.users.reduce((a, v) => ({ ...a, [v.name]: v }), {});
+    matrixUsers.users.forEach(async new_user => {
         // check is there a new user
-        if (old_data[new_user.name] === undefined) {
+        if (StoredMatrixUsers[new_user.name] === undefined) {
             console.log("new matrix user found :D");
             console.log(new_user.name)
             addUsertoMigration(new_user.name);
         }
     });
 
-    store.put("matrix_users", new_data);
+    store.put("matrix_users", matrixUsers);
 }
 
 
