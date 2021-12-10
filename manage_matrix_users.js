@@ -9,7 +9,6 @@ var store = new Storage('temp');
 dotenv.config();
 
 var migratedUsers = store.get("migratedUsers");
-var StoredMatrixUsers = store.get("matrix_users");
 const keycloak = new Keycloak();
 const matrix = new Matrix();
 
@@ -17,22 +16,14 @@ main();
 
 
 async function main() {
-    // On first time the script is running we dont know anything
-    // So we have to initialize a lot and try to join all matrix users to his rooms
-    if (migratedUsers === undefined) {
-        await _initMigratedUsers();
-    }
 
-    // Check is there a new user and add it to migration
-    matrix_user_check()
-        .then(async () => {
-            // calculate a current list of matrix users and his rooms
-            // and diff it with the migration list
-            let userChanges = await getKeaycloakUserChanges();
+    // calculate a current list of matrix users and his rooms
+    // and diff it with the migration list
+    let userChanges = await getKeaycloakUserChanges();
 
-            // Add or remove a user from Matrix Rooms
-            migrateUserChanges(userChanges);
-        })
+    // Add or remove a user from Matrix Rooms
+    migrateUserChanges(userChanges);
+
 }
 
 
@@ -40,32 +31,27 @@ async function main() {
 async function migrateUserChanges(userChanges) {
     for (const [userId, changes] of Object.entries(userChanges)) {
         console.log("UserID: ", userId);
-        console.log("MatrixUserId: ",getMatrixUserId(userId))
+        console.log("MatrixUserId: ", getMatrixUserId(userId))
         console.log("Changes: ", changes);
-        
+
 
         // User has no access to any room we will only logout him
         // He will not be able to login again
         // Or we have a bug in this cron
         if (migratedUsers[userId] === undefined) {
-            console.log("remove user from matrix",userId);
-            // let StoredMatrixUsers = store.get("matrix_users");
-            // console.log("matrix users before delete: ",StoredMatrixUsers);
-            // delete StoredMatrixUsers.users[userId];
-            // console.log("matrix users after delete: ",StoredMatrixUsers);
-            // store.put("matrix_users", StoredMatrixUsers);
+            console.log("remove user from matrix", userId);
             // matrix.userLogout(getMatrixUserId(userId));
         } else {
 
             // Check room changes
-            if(changes.rooms){
-                for (const [roomId,status] of Object.entries(changes.rooms)) {
-                    if(status === undefined) {
+            if (changes.rooms) {
+                for (const [roomId, status] of Object.entries(changes.rooms)) {
+                    if (status === undefined) {
                         // we will ignore when ONE room will be removed
                         // So when the autojoin rooms changes, you will be invited to new one but can keep on your rooms
                     } else {
                         // add user to matrix room
-                        console.log("Invite user: ",userId, " to Matrix room: ",roomId);
+                        console.log("Invite user: ", userId, " to Matrix room: ", roomId);
                         matrix.joinToRooms(getMatrixUserId(userId), roomId)
                     }
                 }
@@ -83,16 +69,8 @@ async function migrateUserChanges(userChanges) {
 }
 
 
-// Extract keycloak UserId from Matrix UserId
-// And add it to the migrationList
-function addUsertoMigration(username) {
-    if (username.match("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        migratedUsers[username.substr(1, 36)] = {}
-    }
-}
-
 function getMatrixUserId(kcUserId) {
-    return '@'+kcUserId+':iot-schweiz.ch';
+    return '@' + kcUserId + ':iot-schweiz.ch';
 }
 
 
@@ -101,10 +79,11 @@ async function getKeaycloakUserChanges() {
     return keycloak.login()
         .then(async () => {
 
+            let matrixUsers = await matrix.getUserList();
             // Calculate a current list of matrix users and his rooms
-            let updatedUserRooms = await keycloak.getUpdatedUserRooms(StoredMatrixUsers.users);
+            let updatedUserRooms = await keycloak.getUpdatedUserRooms(matrixUsers.users);
 
-            console.log("updated list: ",updatedUserRooms);
+            console.log("updated list: ", updatedUserRooms);
             let userChanges = diff(migratedUsers, updatedUserRooms);
 
             migratedUsers = updatedUserRooms;
@@ -114,43 +93,6 @@ async function getKeaycloakUserChanges() {
         });
 }
 
-
-// add new Matrix users to migrationList
-// all users on this list will be checked and invite to some rooms
-async function matrix_user_check() {
-    let matrixUsers = await matrix.getUserList();
-
-    // Convert user array to object
-    StoredMatrixUsersObj = StoredMatrixUsers.users.reduce((a, v) => ({ ...a, [v.name]: v }), {});
-
-    matrixUsers.users.forEach(async new_user => {
-        // check is there a new user
-        if (StoredMatrixUsersObj[new_user.name] === undefined) {
-            console.log("new matrix user found :D");
-            console.log(new_user.name);
-            // A new user found add it to migrationList
-            addUsertoMigration(new_user.name);
-        }
-    });
-
-    store.put("matrix_users", matrixUsers);
-    StoredMatrixUsers = matrixUsers;
-     
-}
-
-
-// One time script to import all matrix users on first run
-async function _initMigratedUsers() {
-    migratedUsers = {};
-    StoredMatrixUsers = await matrix.getUserList();
-    console.log(StoredMatrixUsers.users);
-    StoredMatrixUsers.users.forEach(async user => {
-        addUsertoMigration(user.name);
-    })
-    console.log(migratedUsers);
-    store.put("migratedUsers", migratedUsers);
-    store.put("matrix_users", StoredMatrixUsers);
-}
 
 
 

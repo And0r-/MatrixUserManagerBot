@@ -83,7 +83,7 @@ class Keycloak {
     }
 
     // get all keycloak group lists and merge it to one list with all groups
-    async getUpdatedUserRooms(whitelist={}) {
+    async getUpdatedUserRooms(whitelist) {
         whitelist = whitelist.reduce((a, v) => ({ ...a, [v.name]: v }), {});
         let groupIds = await this.getServerGroupIds();
 
