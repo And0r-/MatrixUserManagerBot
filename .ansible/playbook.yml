@@ -1,0 +1,31 @@
+# playbook.yml
+- name: deploy bot to host
+  hosts: bot
+
+  tasks:
+  - name: checkout bot code on host
+    git:
+      repo: https://github.com/And0r-/MatrixUserManagerBot.git
+      dest: ~/projects/MatrixUserManagerBot
+
+  - name: build docker image
+    become: true
+    docker_image:
+      name: matrix_user_manager_bot
+      build:
+        path: /home/drone/projects/MatrixUserManagerBot
+      source: build
+      state: present
+      force_source: yes
+      debug: yes
+
+
+  - name: restart docker image
+    become: true
+    docker_container:
+      name: matrix_user_manager_bot
+      image: matrix_user_manager_bot
+      recreate: yes
+      restart: yes
+      restart_policy: always
+

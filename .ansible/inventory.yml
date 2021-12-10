@@ -1,0 +1,11 @@
+# invetory.yml
+all:
+  hosts:
+    bot.iot-schweiz.ch:
+  children:
+    bot:
+      hosts:
+        192.168.55.14:
+      vars:
+        ansible_ssh_user: drone
+        ansible_python_interpreter: /usr/bin/python3

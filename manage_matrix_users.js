@@ -5,7 +5,7 @@ const { diff } = require("deep-object-diff");
 const { Keycloak } = require('./Keycloak');
 const { Matrix } = require('./Matrix');
 
-var store = new Storage('temp');
+var store = new Storage('./data/migrationStore');
 dotenv.config();
 
 var migratedUsers = store.get("migratedUsers");

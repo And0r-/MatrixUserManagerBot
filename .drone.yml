@@ -1,0 +1,33 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: deploy
+  image: plugins/ansible:1
+  settings:
+    playbook: .ansible/playbook.yml
+    inventory: .ansible/inventory.yml
+    # syntax_check: true
+    private_key:
+      from_secret: default_ansible_ssh_key
+    # vault_password:
+    #   from_secret: ansible_vault_password
+    # extra_vars:
+    #   from_secret: ANSIBLE_EXTRA_VARS
+  when:
+    event:
+    - push
+    # - tag
+
+- name: send telegram notification
+  image: appleboy/drone-telegram
+  settings:
+    token:
+      from_secret: telegram_token
+    to:
+      from_secret: telegram_user_id
+  when:
+    status:
+    - success
+    - failure
