@@ -8,25 +8,25 @@ const Group2Room = {
     ],
     "/IOT-Member/DE": [
         "room1",
-        "room524",
+        "room52",
         "room64",
-        "room775",
+        "room7755",
     ],
     "/IOT-Member/CH": [
         "room2",
-        "room54",
-        "room63",
+        "room92",
+        "room63433",
         "room7",
     ],
     "/IOT-Member/AT": [
         "room3",
-        "room533",
-        "room6",
+        "room5332",
+        "room61",
         "room789",
     ],
     "/IOT-Supper-Admin": [
         "room42",
-        "room5",
+        "room522222",
         "room6",
         "room78",
     ],
@@ -87,11 +87,14 @@ class Keycloak {
         let groupIds = await this.getServerGroupIds();
 
         let updatedUserRooms = {};
+        // console.log("whitelist",whitelist);
 
         // 
         return Promise.all(
             groupIds.map(async (groupId) => {
                 let groupData = await this.getGroupMembers(groupId[0]);
+
+                // console.log(groupData);
 
                 let UpdatedUserGroupeRooms = this.generateUpdatedUserRooms(groupId[1], groupData, whitelist);
                 updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
@@ -104,16 +107,24 @@ class Keycloak {
     // eg: {user1: {"room1": true,"room2": true}}
     generateUpdatedUserRooms(group, users, whitelist) {
         let updatedUserRooms = {};
+        if (group === "/IOT-Supper-Admin") {
+            console.log("admins: ",users);
+        }
 
         users.forEach(user => {
+            
             // Groupmember is enabled and in Matrix
             if (user.enabled === true && user.id in whitelist) {
-                updatedUserRooms[user.id] = {};
+                updatedUserRooms[user.id] = {"rooms":{}};
+
                 // We have some allowed Rooms for this Group
                 if (group in Group2Room) {
                     Group2Room[group].forEach(room => {
-                        updatedUserRooms[user.id][room] = true;
+                        updatedUserRooms[user.id]["rooms"][room] = true;
                     })
+                }
+                if (group === "/IOT-Supper-Admin") {
+                    updatedUserRooms[user.id]["admin"] = true;
                 }
             }
         })

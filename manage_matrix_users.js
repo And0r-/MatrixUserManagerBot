@@ -15,11 +15,11 @@ const matrix = new Matrix();
 main();
 
 
-function main() {
+async function main() {
     // On first time the script is running we dont know anything
     // So we have to initialize a lot and try to join all matrix users to his rooms
     if (migratedUsers === undefined) {
-        _initMigratedUsers();
+        await _initMigratedUsers();
     }
 
     // Check is there a new user and add it to migration
@@ -29,6 +29,7 @@ function main() {
             // and diff it with the migration list
             let userChanges = await getKeaycloakUserChanges();
 
+            // Add or remove a user from Matrix Rooms
             migrateUserChanges(userChanges);
         })
 }
@@ -36,24 +37,48 @@ function main() {
 
 // Add or remove a user from Matrix Rooms
 async function migrateUserChanges(userChanges) {
-    for (const userChange of Object.entries(userChanges)) {
-        console.log(userChange);
+    for (const [userId, changes] of Object.entries(userChanges)) {
+        console.log("UserID: ", userId);
+        console.log("MatrixUserId: ",getMatrixUserId(userId))
+        console.log("Changes: ", changes);
+        
+
+        // User has no access to any room we will only logout him
+        // He will not be able to login again
+        // Or we have a bug in this cron
+        if (migratedUsers[userId] === undefined) {
+            console.log("remove user from matrix",userId);
+            // let StoredMatrixUsers = store.get("matrix_users");
+            // console.log("matrix users before delete: ",StoredMatrixUsers);
+            // delete StoredMatrixUsers.users[userId];
+            // console.log("matrix users after delete: ",StoredMatrixUsers);
+            // store.put("matrix_users", StoredMatrixUsers);
+            // matrix.userLogout(getMatrixUserId(userId));
+        } else {
+
+            // Check room changes
+            if(changes.rooms){
+                for (const [roomId,status] of Object.entries(changes.rooms)) {
+                    if(status === undefined) {
+                        // we will ignore when ONE room will be removed
+                        // So when the autojoin rooms changes, you will be invited to new one but can keep on your rooms
+                    } else {
+                        // add user to matrix room
+                        console.log("Invite user: ",userId, " to Matrix room: ",roomId);
+                        matrix.joinToRooms(getMatrixUserId(userId), roomId)
+                    }
+                }
+            }
+            if (changes.admin === true) {
+                console.log("user is now admin");
+                matrix.setAdmin(getMatrixUserId(userId), true);
+            } else if ("admin" in changes && changes.admin === undefined) {
+                console.log("user is no more admin");
+                matrix.setAdmin(getMatrixUserId(userId), false);
+            }
+            // }
+        }
     }
-}
-
-
-// On first time the script is running we dont know anything
-// So we have to initialize a lot and try to join all matrix users to his rooms
-async function _initMigratedUsers() {
-    migratedUsers = {};
-    let matrix_users = await matrix.getUserList();
-    console.log(matrix_users.users);
-    matrix_users.users.forEach(async user => {
-        addUsertoMigration(user.name);
-    })
-    console.log(migratedUsers);
-    store.put("migratedUsers", migratedUsers);
-    store.put("matrix_users", matrix_users);
 }
 
 
@@ -65,6 +90,10 @@ function addUsertoMigration(username) {
     }
 }
 
+function getMatrixUserId(kcUserId) {
+    return '@'+kcUserId+':iot-schweiz.ch';
+}
+
 
 // calculat needet keycloak user changes
 async function getKeaycloakUserChanges() {
@@ -74,6 +103,7 @@ async function getKeaycloakUserChanges() {
             // Calculate a current list of matrix users and his rooms
             let updatedUserRooms = await keycloak.getUpdatedUserRooms(migratedUsers);
 
+            console.log("updated list: ",updatedUserRooms);
             let userChanges = diff(migratedUsers, updatedUserRooms);
 
             migratedUsers = updatedUserRooms;
@@ -106,6 +136,19 @@ async function matrix_user_check() {
     store.put("matrix_users", matrixUsers);
 }
 
+
+// One time script to import all matrix users on first run
+async function _initMigratedUsers() {
+    migratedUsers = {};
+    let matrix_users = await matrix.getUserList();
+    console.log(matrix_users.users);
+    matrix_users.users.forEach(async user => {
+        addUsertoMigration(user.name);
+    })
+    console.log(migratedUsers);
+    store.put("migratedUsers", migratedUsers);
+    store.put("matrix_users", matrix_users);
+}
 
 
 
