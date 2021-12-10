@@ -9,6 +9,7 @@ var store = new Storage('temp');
 dotenv.config();
 
 var migratedUsers = store.get("migratedUsers");
+const supremeKaosId = "48548912-4990-4fc5-bdf5-cb7d6f28ec75";
 const keycloak = new Keycloak();
 const matrix = new Matrix();
 
@@ -30,15 +31,12 @@ async function main() {
 // Add or remove a user from Matrix Rooms
 async function migrateUserChanges(userChanges) {
     for (const [userId, changes] of Object.entries(userChanges)) {
-        console.log("UserID: ", userId);
-        console.log("MatrixUserId: ", getMatrixUserId(userId))
-        console.log("Changes: ", changes);
+        // Ignore changes from this bot. 
+        if (userId === supremeKaosId) {continue;}
 
-
-        // User has no access to any room we will only logout him
-        // He will not be able to login again
-        // Or we have a bug in this cron
-        if (migratedUsers[userId] === undefined) {
+        // We do not delete matrix users, but when a user is deactivated 
+        // or have no access to any matrix rooms, we will logout him
+        if (migratedUsers[userId] === undefined || Object.keys(migratedUsers[userId].rooms).length === 0) {
             console.log("remove user from matrix", userId);
             // matrix.userLogout(getMatrixUserId(userId));
         } else {
@@ -52,25 +50,20 @@ async function migrateUserChanges(userChanges) {
                     } else {
                         // add user to matrix room
                         console.log("Invite user: ", userId, " to Matrix room: ", roomId);
-                        matrix.joinToRooms(getMatrixUserId(userId), roomId)
+                        matrix.joinToRooms(keycloak.getMatrixUserId(userId), roomId)
                     }
                 }
             }
             if (changes.admin === true) {
                 console.log("user is now admin");
-                matrix.setAdmin(getMatrixUserId(userId), true);
+                matrix.setAdmin(keycloak.getMatrixUserId(userId), true);
             } else if ("admin" in changes && changes.admin === undefined) {
                 console.log("user is no more admin");
-                matrix.setAdmin(getMatrixUserId(userId), false);
+                matrix.setAdmin(keycloak.getMatrixUserId(userId), false);
             }
             // }
         }
     }
-}
-
-
-function getMatrixUserId(kcUserId) {
-    return '@' + kcUserId + ':iot-schweiz.ch';
 }
 
 
@@ -83,7 +76,6 @@ async function getKeaycloakUserChanges() {
             // Calculate a current list of matrix users and his rooms
             let updatedUserRooms = await keycloak.getUpdatedUserRooms(matrixUsers.users);
 
-            console.log("updated list: ", updatedUserRooms);
             let userChanges = diff(migratedUsers, updatedUserRooms);
 
             migratedUsers = updatedUserRooms;

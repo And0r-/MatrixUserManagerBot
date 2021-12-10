@@ -109,14 +109,10 @@ class Keycloak {
     generateUpdatedUserRooms(group, users, whitelist) {
         
         let updatedUserRooms = {};
-        if (group === "/IOT-Supper-Admin") {
-            console.log("admins: ",users);
-        }
-
         users.forEach(user => {
             
             // Groupmember is enabled and in Matrix
-            if (user.enabled === true && '@'+user.id+':iot-schweiz.ch' in whitelist) {
+            if (user.enabled === true && this.getMatrixUserId(user.id) in whitelist) {
                 updatedUserRooms[user.id] = {"rooms":{}};
 
                 // We have some allowed Rooms for this Group
@@ -132,6 +128,10 @@ class Keycloak {
         })
 
         return updatedUserRooms;
+    }
+
+    getMatrixUserId(kcUserId) {
+        return '@' + kcUserId + ':iot-schweiz.ch';
     }
 }
 
