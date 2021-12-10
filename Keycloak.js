@@ -2,35 +2,42 @@ var KeycloakAdminClient = require("@keycloak/keycloak-admin-client").default
 const merge = require('deepmerge')
 
 // There will be soon a other project to manage this list in a gui and us it as feed
+
+const GlobalRooms = [
+    "!hgmugBOGJQvzcTLbIw:iot-schweiz.ch", // IOT Space
+    "!uJnSWScWWKuoAIdYfw:iot-schweiz.ch", // Server Maintenance
+    "!iCvfBACVysaSdWgUsZ:iot-schweiz.ch", // World Chat
+]
+
+
 const Group2Room = {
     "/IOT-CoM": [
-        "room8",
+        "!ZrIbodrffEXAjfnXFQ:iot-schweiz.ch", // CoM Space
+        "!sQCemRDsABfbgHIZZH:iot-schweiz.ch", // Common
     ],
     "/IOT-Member/DE": [
-        "room1",
-        "room52",
-        "room64",
-        "room7755",
+        "!DoRqzpVqkdUAkbhcGb:iot-schweiz.ch", // German
+        "!poBhKNBKGHNUAJLZYm:iot-schweiz.ch", // DE Space
+        "!EgRbSiYUtaLjmGSRjG:iot-schweiz.ch", // Allgemein
+        ...GlobalRooms
     ],
     "/IOT-Member/CH": [
-        "room2",
-        "room92",
-        "room63433",
-        "room7",
+        "!DoRqzpVqkdUAkbhcGb:iot-schweiz.ch", // German
+        "!QvpbWUFcNDfDbQOmTe:iot-schweiz.ch", // CH Space
+        "!bDTYvUIQlWgFZbqjaj:iot-schweiz.ch", // Allgemein
+        ...GlobalRooms
     ],
     "/IOT-Member/AT": [
-        "room3",
-        "room5332",
-        "room61",
-        "room789",
+        "!DoRqzpVqkdUAkbhcGb:iot-schweiz.ch", // German
+        "!rGIgQcgZhohzHvmFsq:iot-schweiz.ch", // AT Space
+        "!CRJFdgdctQLlrIoYHh:iot-schweiz.ch", // Allgemein
+        ...GlobalRooms
     ],
     "/IOT-Supper-Admin": [
-        "room42",
-        "room522222",
-        "room6",
-        "room78",
+
     ],
 }
+
 
 
 class Keycloak {
@@ -66,6 +73,11 @@ class Keycloak {
         return this.kcAdminClient.groups.listMembers({ id: groupId });
     }
 
+    getAdmins() {
+        return this.kcAdminClient.roles.findUsersWithRole({
+            name: 'Matrix Admin',
+        });
+    }
     async getServerGroupIds() {
         return this.kcAdminClient.groups.find()
             .then(async groups => {
@@ -76,7 +88,6 @@ class Keycloak {
     async _find_group_ids(groups, group_ids) {
         groups.forEach(async group => {
             group_ids.push([group.id, group.path]);
-            // console.log(group)
             this._find_group_ids(group.subGroups, group_ids);
         });
         return group_ids;
@@ -88,32 +99,46 @@ class Keycloak {
         let groupIds = await this.getServerGroupIds();
 
         let updatedUserRooms = {};
-        // console.log("whitelist",whitelist);
 
-        // 
+        // Wait untill we have all group api requests and return it as one list
         return Promise.all(
             groupIds.map(async (groupId) => {
                 let groupData = await this.getGroupMembers(groupId[0]);
-
-                // console.log(groupData);
 
                 let UpdatedUserGroupeRooms = this.generateUpdatedUserRooms(groupId[1], groupData, whitelist);
                 updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
             })
         )
-            .then(() => { return updatedUserRooms })
+            .then(async () => {
+
+                // Add  admin informations
+                // @TODO: the role api will ignore users that in a group with admin role mapping
+                let admins = await this.getAdmins();
+                console.log("admins feed:",admins)
+                admins = admins.reduce((a, v) => ({ ...a, [v.id]: v }), {});
+
+                for (const [userId] of Object.entries(updatedUserRooms)) {
+                    if (userId in admins) {
+                        updatedUserRooms[userId]["admin"] = true;
+                    } else {
+                        updatedUserRooms[userId]["admin"] = false;
+                    }
+                }
+
+                return updatedUserRooms
+            })
     }
 
     // Transform all keycloak group data to a User groupe list
     // eg: {user1: {"room1": true,"room2": true}}
     generateUpdatedUserRooms(group, users, whitelist) {
-        
+
         let updatedUserRooms = {};
+
         users.forEach(user => {
-            
             // Groupmember is enabled and in Matrix
             if (user.enabled === true && this.getMatrixUserId(user.id) in whitelist) {
-                updatedUserRooms[user.id] = {"rooms":{}};
+                updatedUserRooms[user.id] = { "rooms": {} };
 
                 // We have some allowed Rooms for this Group
                 if (group in Group2Room) {
@@ -121,9 +146,7 @@ class Keycloak {
                         updatedUserRooms[user.id]["rooms"][room] = true;
                     })
                 }
-                if (group === "/IOT-Supper-Admin") {
-                    updatedUserRooms[user.id]["admin"] = true;
-                }
+
             }
         })
 

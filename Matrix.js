@@ -50,32 +50,6 @@ class Matrix {
             });
     }
 
-    async joinToRooms(userId, matrixRoom) {
-
-        // set axios request config
-        let config = {
-            headers: {
-                'Authorization': 'Bearer ' + process.env.MATRIX_BOT_TOKEN
-            }
-        }
-
-        let body = { user_id: userId }
-        console.log(body);
-
-        let url = process.env.MATRIX_HOST + '_synapse/admin/v1/join/' + matrixRoom;
-
-        console.log("url: ", url);
-
-        await axios.post(url, body, config)
-            .then(res => {
-                console.log(res.data);
-            })
-            .catch(error => {
-                console.log("error..." + error)
-                console.log(error.response.data);
-            });
-    }
-
     async userLogout(userId) {
 
         // set axios request config
@@ -87,7 +61,6 @@ class Matrix {
         }
 
         let url = process.env.MATRIX_HOST + '_synapse/admin/v2/users/'+userId+'/devices';
-
 
         axios.get(url, config)
             .then(res => {
@@ -140,7 +113,6 @@ class Matrix {
                 console.log("error..." + error)
                 console.log(error.response.data);
             });
-
     }
 }
 
