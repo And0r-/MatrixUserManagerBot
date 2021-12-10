@@ -13,7 +13,13 @@ const supremeKaosId = "48548912-4990-4fc5-bdf5-cb7d6f28ec75";
 const keycloak = new Keycloak();
 const matrix = new Matrix();
 
-main();
+var cron = require('node-cron');
+
+cron.schedule('*/5 * * * * *', () => {
+    main();
+});
+
+
 
 
 async function main() {
