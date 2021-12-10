@@ -84,6 +84,7 @@ class Keycloak {
 
     // get all keycloak group lists and merge it to one list with all groups
     async getUpdatedUserRooms(whitelist={}) {
+        whitelist = whitelist.reduce((a, v) => ({ ...a, [v.name]: v }), {});
         let groupIds = await this.getServerGroupIds();
 
         let updatedUserRooms = {};
@@ -106,6 +107,7 @@ class Keycloak {
     // Transform all keycloak group data to a User groupe list
     // eg: {user1: {"room1": true,"room2": true}}
     generateUpdatedUserRooms(group, users, whitelist) {
+        
         let updatedUserRooms = {};
         if (group === "/IOT-Supper-Admin") {
             console.log("admins: ",users);
@@ -114,7 +116,7 @@ class Keycloak {
         users.forEach(user => {
             
             // Groupmember is enabled and in Matrix
-            if (user.enabled === true && user.id in whitelist) {
+            if (user.enabled === true && '@'+user.id+':iot-schweiz.ch' in whitelist) {
                 updatedUserRooms[user.id] = {"rooms":{}};
 
                 // We have some allowed Rooms for this Group

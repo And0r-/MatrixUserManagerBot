@@ -9,6 +9,7 @@ var store = new Storage('temp');
 dotenv.config();
 
 var migratedUsers = store.get("migratedUsers");
+var StoredMatrixUsers = store.get("matrix_users");
 const keycloak = new Keycloak();
 const matrix = new Matrix();
 
@@ -101,7 +102,7 @@ async function getKeaycloakUserChanges() {
         .then(async () => {
 
             // Calculate a current list of matrix users and his rooms
-            let updatedUserRooms = await keycloak.getUpdatedUserRooms(migratedUsers);
+            let updatedUserRooms = await keycloak.getUpdatedUserRooms(StoredMatrixUsers.users);
 
             console.log("updated list: ",updatedUserRooms);
             let userChanges = diff(migratedUsers, updatedUserRooms);
@@ -118,14 +119,13 @@ async function getKeaycloakUserChanges() {
 // all users on this list will be checked and invite to some rooms
 async function matrix_user_check() {
     let matrixUsers = await matrix.getUserList();
-    let StoredMatrixUsers = store.get("matrix_users");
 
     // Convert user array to object
-    StoredMatrixUsers = StoredMatrixUsers.users.reduce((a, v) => ({ ...a, [v.name]: v }), {});
+    StoredMatrixUsersObj = StoredMatrixUsers.users.reduce((a, v) => ({ ...a, [v.name]: v }), {});
 
     matrixUsers.users.forEach(async new_user => {
         // check is there a new user
-        if (StoredMatrixUsers[new_user.name] === undefined) {
+        if (StoredMatrixUsersObj[new_user.name] === undefined) {
             console.log("new matrix user found :D");
             console.log(new_user.name);
             // A new user found add it to migrationList
@@ -134,20 +134,22 @@ async function matrix_user_check() {
     });
 
     store.put("matrix_users", matrixUsers);
+    StoredMatrixUsers = matrixUsers;
+     
 }
 
 
 // One time script to import all matrix users on first run
 async function _initMigratedUsers() {
     migratedUsers = {};
-    let matrix_users = await matrix.getUserList();
-    console.log(matrix_users.users);
-    matrix_users.users.forEach(async user => {
+    StoredMatrixUsers = await matrix.getUserList();
+    console.log(StoredMatrixUsers.users);
+    StoredMatrixUsers.users.forEach(async user => {
         addUsertoMigration(user.name);
     })
     console.log(migratedUsers);
     store.put("migratedUsers", migratedUsers);
-    store.put("matrix_users", matrix_users);
+    store.put("matrix_users", StoredMatrixUsers);
 }
 
 
