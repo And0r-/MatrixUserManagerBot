@@ -31,7 +31,9 @@ async function main() {
     // Add a user to some Matrix rooms
     // logout users with no more Matrix access
     // manage admin status in Matrix
-    migrateUserChanges(userChanges);
+    if (userChanges) {
+        migrateUserChanges(userChanges);
+    }
 }
 
 
@@ -39,7 +41,7 @@ async function main() {
 async function migrateUserChanges(userChanges) {
     for (const [userId, changes] of Object.entries(userChanges)) {
         // Ignore changes from this bot. 
-        if (userId === supremeKaosId) {continue;}
+        if (userId === supremeKaosId) { continue; }
 
         // We do not delete matrix users, but when a user is deactivated 
         // or have no access to any matrix rooms, we will logout him
@@ -75,8 +77,17 @@ async function getKeaycloakUserChanges() {
         .then(async () => {
 
             let matrixUsers = await matrix.getUserList();
+
+            if (!matrixUsers) {
+                console.log("Matrix feed konnte nicht abgerufen werden, abbrechen!");
+                return false;
+            }
             // Calculate a current list of matrix users and his rooms
             let updatedUserRooms = await keycloak.getUpdatedUserRooms(matrixUsers.users);
+            if (!updatedUserRooms) {
+                console.log("keine keycloak daten erhalten, abbrechen!");
+                return false;
+            }
 
             let userChanges = diff(migratedUsers, updatedUserRooms);
 
