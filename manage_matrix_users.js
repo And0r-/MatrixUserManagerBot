@@ -47,7 +47,7 @@ async function migrateUserChanges(userChanges) {
         // or have no access to any matrix rooms, we will logout him
         if (migratedUsers[userId] === undefined || Object.keys(migratedUsers[userId].rooms).length === 0) {
             console.log("remove user from matrix", userId);
-            matrix.userLogout(getMatrixUserId(userId));
+            matrix.userLogout(keycloak.getMatrixUserId(userId));
         } else {
 
             // Check room changes
