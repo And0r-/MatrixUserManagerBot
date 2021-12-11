@@ -45,6 +45,7 @@ class Keycloak {
         this.kcAdminClient;
         this.groups = {};
         this.user_groups;
+        this.adminRoleName = "Matrix Admin"
     }
 
     async login() {
@@ -75,7 +76,7 @@ class Keycloak {
 
     getAdmins() {
         return this.kcAdminClient.roles.findUsersWithRole({
-            name: 'Matrix Admin',
+            name: this.adminRoleName,
         });
     }
     async getServerGroupIds() {
@@ -103,22 +104,30 @@ class Keycloak {
         // Wait untill we have all group api requests and return it as one list
         return Promise.all(
             groupIds.map(async (groupId) => {
+
                 let groupData = await this.getGroupMembers(groupId[0]);
 
-                let UpdatedUserGroupeRooms = this.generateUpdatedUserRooms(groupId[1], groupData, whitelist);
+                let UpdatedUserGroupeRooms = await this.generateUpdatedUserRooms(groupId[0], groupId[1], groupData, whitelist);
                 updatedUserRooms = merge(updatedUserRooms, UpdatedUserGroupeRooms);
             })
         )
             .then(async () => {
 
-                // Add  admin informations
-                // @TODO: the role api will ignore users that in a group with admin role mapping
+                // Add  admin flag when user is in admin role.
+                // Keycloak api will ignore users that have not the role self,
+                // but are in a group with role mapping...
+                // https://github.com/keycloak/keycloak/pull/6326
+
+                // So when the user is in a group with matrix admin role mapping, 
+                // we will set the admin flag already on the group loop
+
                 let admins = await this.getAdmins();
-                console.log("admins feed:",admins)
                 admins = admins.reduce((a, v) => ({ ...a, [v.id]: v }), {});
 
                 for (const [userId] of Object.entries(updatedUserRooms)) {
-                    if (userId in admins) {
+                    // when user has the  admin role we have to set it here.
+                    // Users in a groupe with admin mapping, have the flag already
+                    if (userId in admins || updatedUserRooms[userId]["admin"] === true) {
                         updatedUserRooms[userId]["admin"] = true;
                     } else {
                         updatedUserRooms[userId]["admin"] = false;
@@ -131,26 +140,47 @@ class Keycloak {
 
     // Transform all keycloak group data to a User groupe list
     // eg: {user1: {"room1": true,"room2": true}}
-    generateUpdatedUserRooms(group, users, whitelist) {
+    async generateUpdatedUserRooms(groupId, groupPath, users, whitelist) {
 
         let updatedUserRooms = {};
+        let isAdminGroup = await this.isAdminGroup(groupId);
 
         users.forEach(user => {
             // Groupmember is enabled and in Matrix
             if (user.enabled === true && this.getMatrixUserId(user.id) in whitelist) {
                 updatedUserRooms[user.id] = { "rooms": {} };
 
+                // set admin flag when user is in a kcgroupe that is mapped to the matrix admin role
+                if (isAdminGroup === true) {
+                    updatedUserRooms[user.id]["admin"] = true;
+                }
+
                 // We have some allowed Rooms for this Group
-                if (group in Group2Room) {
-                    Group2Room[group].forEach(room => {
+                if (groupPath in Group2Room) {
+                    Group2Room[groupPath].forEach(room => {
                         updatedUserRooms[user.id]["rooms"][room] = true;
                     })
                 }
-
             }
         })
 
         return updatedUserRooms;
+    }
+
+    async isAdminGroup(groupId) {
+        let listRealmRoleMappings = await this.kcAdminClient.groups.listRealmRoleMappings({
+            id: groupId,
+        });
+
+        let isAdmin = false;
+
+        listRealmRoleMappings.forEach(role => {
+            if (role.name === this.adminRoleName) {
+                isAdmin = true
+            }
+        })
+
+        return isAdmin;
     }
 
     getMatrixUserId(kcUserId) {
