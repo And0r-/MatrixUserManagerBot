@@ -28,4 +28,6 @@
       recreate: yes
       restart: yes
       restart_policy: always
+      volumes:
+        - "/home/drone/projects/MatrixUserManagerBot/data:/app/data"
 
