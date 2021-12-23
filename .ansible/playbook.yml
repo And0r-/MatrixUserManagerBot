@@ -25,6 +25,8 @@
     docker_container:
       name: matrix_user_manager_bot
       image: matrix_user_manager_bot
+      labels:
+        "com.centurylinklabs.watchtower.enable": "false" 
       recreate: yes
       restart: yes
       restart_policy: always
