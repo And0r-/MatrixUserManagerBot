@@ -33,6 +33,21 @@ const Group2Room = {
         "!CRJFdgdctQLlrIoYHh:iot-schweiz.ch", // Allgemein
         ...GlobalRooms
     ],
+    "/IOT-Member/BIS": [
+        "!PVaMPzVHKvlcnbbHTE:iot-schweiz.ch", // BIS Space
+        "!CUTmeAgCqYIHlRsoxN:iot-schweiz.ch", // Default
+        ...GlobalRooms
+    ],
+    "/IOT-Member/NAS": [
+        "!UahcqBCrLtaThZjqGQ:iot-schweiz.ch", // NAS Space
+        "!iJEkQCiszbvZPPuVQr:iot-schweiz.ch", // Allgemein
+        ...GlobalRooms
+    ],
+    "/IOT-Member/SAS": [
+        "!SYJVIVOHKluzDeJJOw:iot-schweiz.ch", // SAS Space
+        "!VVWfbjzusZvJhceljm:iot-schweiz.ch", // Default
+        ...GlobalRooms
+    ],
     "/IOT-Supper-Admin": [
 
     ],
