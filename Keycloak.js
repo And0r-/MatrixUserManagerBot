@@ -48,6 +48,11 @@ const Group2Room = {
         "!VVWfbjzusZvJhceljm:iot-schweiz.ch", // Default
         ...GlobalRooms
     ],
+    "/IOT-Member/Gallia": [
+        "!ThdFAdKukPLATDtxyi:iot-schweiz.ch", // Gallia Space
+        "!MZhftUApKFUBdrMBfO:iot-schweiz.ch", // Default room
+        ...GlobalRooms
+    ],
     "/IOT-Supper-Admin": [
 
     ],
