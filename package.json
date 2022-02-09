@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@keycloak/keycloak-admin-client": "^16.1.0",
-    "axios": "^0.24.0",
+    "axios": "^0.25.0",
     "deep-object-diff": "^1.1.0",
     "deepmerge": "^4.2.2",
     "dotenv": "^10.0.0",
