@@ -10,16 +10,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@keycloak/keycloak-admin-client": "^17.0.1",
-    "axios": "^0.26.1",
+    "@keycloak/keycloak-admin-client": "^18.0.0",
+    "axios": "^0.27.2",
     "deep-object-diff": "^1.1.7",
     "deepmerge": "^4.2.2",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.0.1",
     "keycloak-admin": "^1.14.22",
-    "keycloak-js": "^17.0.1",
-    "matrix-js-sdk": "^17.0.0",
-    "node-cron": "^3.0.0",
+    "keycloak-js": "^18.0.0",
+    "matrix-js-sdk": "^18.1.0",
+    "node-cron": "^3.0.1",
     "node-storage": "^0.0.9",
-    "nodemailer": "^6.7.3"
+    "nodemailer": "^6.7.5"
   }
 }
