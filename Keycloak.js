@@ -15,40 +15,40 @@ const Group2Room = {
         "!ZrIbodrffEXAjfnXFQ:iot-schweiz.ch", // CoM Space
         "!sQCemRDsABfbgHIZZH:iot-schweiz.ch", // Common
     ],
-    "/Section/DE": [
+    "/Sections/DE": [
         "!DoRqzpVqkdUAkbhcGb:iot-schweiz.ch", // German
         "!poBhKNBKGHNUAJLZYm:iot-schweiz.ch", // DE Space
         "!EgRbSiYUtaLjmGSRjG:iot-schweiz.ch", // Allgemein
         ...GlobalRooms
     ],
-    "/Section/CH": [
+    "/Sections/CH": [
         "!DoRqzpVqkdUAkbhcGb:iot-schweiz.ch", // German
         "!QvpbWUFcNDfDbQOmTe:iot-schweiz.ch", // CH Space
         "!bDTYvUIQlWgFZbqjaj:iot-schweiz.ch", // Allgemein
         ...GlobalRooms
     ],
-    "/Section/AT": [
+    "/Sections/AT": [
         "!DoRqzpVqkdUAkbhcGb:iot-schweiz.ch", // German
         "!rGIgQcgZhohzHvmFsq:iot-schweiz.ch", // AT Space
         "!CRJFdgdctQLlrIoYHh:iot-schweiz.ch", // Allgemein
         ...GlobalRooms
     ],
-    "/Section/BIS": [
+    "/Sections/BIS": [
         "!PVaMPzVHKvlcnbbHTE:iot-schweiz.ch", // BIS Space
         "!CUTmeAgCqYIHlRsoxN:iot-schweiz.ch", // Default
         ...GlobalRooms
     ],
-    "/Section/NAS": [
+    "/Sections/NAS": [
         "!UahcqBCrLtaThZjqGQ:iot-schweiz.ch", // NAS Space
         "!iJEkQCiszbvZPPuVQr:iot-schweiz.ch", // Allgemein
         ...GlobalRooms
     ],
-    "/Section/SAS": [
+    "/Sections/SAS": [
         "!SYJVIVOHKluzDeJJOw:iot-schweiz.ch", // SAS Space
         "!VVWfbjzusZvJhceljm:iot-schweiz.ch", // Default
         ...GlobalRooms
     ],
-    "/Section/Gallia": [
+    "/Sections/Gallia": [
         "!ThdFAdKukPLATDtxyi:iot-schweiz.ch", // Gallia Space
         "!MZhftUApKFUBdrMBfO:iot-schweiz.ch", // Default room
         ...GlobalRooms
