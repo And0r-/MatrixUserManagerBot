@@ -40,7 +40,7 @@ const Group2Room = {
     ],
     "/Sections/NAS": [
         "!UahcqBCrLtaThZjqGQ:iot-schweiz.ch", // NAS Space
-        "!iJEkQCiszbvZPPuVQr:iot-schweiz.ch", // Allgemein
+        "!nJtxPlJROmQYQSIGCM:iot-schweiz.ch", // Default room
         ...GlobalRooms
     ],
     "/Sections/SAS": [
