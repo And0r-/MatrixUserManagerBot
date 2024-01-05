@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@keycloak/keycloak-admin-client": "^18.0.0",
-    "axios": "^0.27.2",
+    "@keycloak/keycloak-admin-client": "^21.1.1",
+    "axios": "^1.6.4",
     "deep-object-diff": "^1.1.7",
     "deepmerge": "^4.2.2",
     "dotenv": "^16.0.1",
