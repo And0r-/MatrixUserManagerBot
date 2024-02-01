@@ -20,6 +20,6 @@
     "matrix-js-sdk": "^18.1.0",
     "node-cron": "^3.0.1",
     "node-storage": "^0.0.9",
-    "nodemailer": "^6.7.5"
+    "nodemailer": "^6.9.9"
   }
 }
